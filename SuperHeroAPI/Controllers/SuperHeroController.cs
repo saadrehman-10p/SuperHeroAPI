@@ -2,74 +2,64 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SuperHeroAPI.Model;
+using SuperHeroAPI.Services;
+
 namespace SuperHeroAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class SuperHeroController : ControllerBase
     {
-        
-        private  DataContext _context { get; }
 
-        public SuperHeroController(DataContext context)
+        private readonly ISuperHeroService _superHeroService;
+
+        public SuperHeroController(ISuperHeroService superHeroService)
         {
-            _context = context;
+            _superHeroService = superHeroService;
         }
 
-        [HttpGet(Name ="GetSuperHeroes"),Authorize(Roles ="Admin")]
+        [HttpGet(Name = "GetSuperHeroes")]
 
         public async Task<ActionResult<List<SuperHero>>> Get()
         {
-            return Ok(await _context.SuperHeroes.ToListAsync());
+            return Ok(_superHeroService.GetSuperHeroes().ToList());
         }
 
-        [HttpGet ("{id}"),Authorize(Roles = "Admin")]
+        [HttpGet("{id}"),]
 
         public async Task<ActionResult<SuperHero>> Get(int id)
         {
-            var hero=await _context.SuperHeroes.FindAsync(id);
+            var hero = _superHeroService.GetSuperHeroById(id);
             if (hero == null)
             {
-                return BadRequest("Hero not Found");
+                return BadRequest("hero not found");
             }
             return Ok(hero);
         }
-        [HttpPost,Authorize(Roles ="Admin")]
-        public async Task<ActionResult<List<SuperHero>>> PostHero(SuperHero hero)
+        [HttpPost]
+        public async Task<ActionResult<List<SuperHero>>> PostHero(SuperHeroDTO hero)
         {
-            
-            _context.SuperHeroes.Add(hero);
-            await _context.SaveChangesAsync();
-            return Ok(await _context.SuperHeroes.ToListAsync());
+
+           
+             _superHeroService.PostSuperHero(hero);
+
+            return Ok(_superHeroService.GetSuperHeroes().ToList());
         }
-        [HttpPut ,Authorize(Roles ="Admin")]
-        public async Task<ActionResult<List<SuperHero>>> updateHero(SuperHero request)
+        [HttpPut]
+        public async Task<ActionResult<List<SuperHero>>> updateHero(SuperHero Hero)
         {
-            var hero =await _context.SuperHeroes.FindAsync(request.Id);
-            if (hero == null)
-            {
-                return BadRequest("Hero not Found");
-            }
-            hero.Name=request.Name;
-            hero.FirstName=request.FirstName;
-            hero.LastName=request.LastName;
-            hero.Place = request.Place;
-            await _context.SaveChangesAsync();
-            return Ok(await _context.SuperHeroes.ToListAsync());
+            _superHeroService.PutSuperHero(Hero);
+            
+
+            return Ok(_superHeroService.GetSuperHeroes().ToList());
         }
 
-        [HttpDelete("{id}"),Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
 
         public async Task<ActionResult<List<SuperHero>>> Delete(int id)
         {
-            var hero = await _context.SuperHeroes.FindAsync(id);
-            if (hero == null)
-            {
-                return BadRequest("Hero not Found");
-            }
-            _context.SuperHeroes.Remove(hero);
-            await _context.SaveChangesAsync();
-            return Ok(await _context.SuperHeroes.ToListAsync());
+            _superHeroService.DeleteSuperHero(id);
+            return Ok(_superHeroService.GetSuperHeroes().ToList());
         }
 
     }
